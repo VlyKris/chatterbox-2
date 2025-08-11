@@ -5,7 +5,7 @@ import { Hash, Plus, Settings, Users, ChevronDown, ChevronRight } from "lucide-r
 import { Button } from "@/components/ui/button";
 import { UserButton } from "@/components/auth/UserButton";
 import { motion } from "framer-motion";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { CreateWorkspaceModal } from "./CreateWorkspaceModal";
 import { CreateChannelModal } from "./CreateChannelModal";
 import { JoinWorkspaceModal } from "./JoinWorkspaceModal";
@@ -44,15 +44,25 @@ export function Sidebar({
   const [showJoinWorkspace, setShowJoinWorkspace] = useState(false);
   const [channelsExpanded, setChannelsExpanded] = useState(true);
 
-  // Auto-select first workspace if none selected
-  if (workspaces && workspaces.length > 0 && !selectedWorkspaceId) {
-    onWorkspaceSelect(workspaces[0]._id);
-  }
+  useEffect(() => {
+    // Auto-select first workspace if none selected
+    if (workspaces && workspaces.length > 0 && !selectedWorkspaceId) {
+      const firstValidWorkspace = workspaces.find((ws) => ws && ws._id);
+      if (firstValidWorkspace && firstValidWorkspace._id) {
+        onWorkspaceSelect(firstValidWorkspace._id);
+      }
+    }
+  }, [workspaces, selectedWorkspaceId, onWorkspaceSelect]);
 
-  // Auto-select first channel if none selected
-  if (channels && channels.length > 0 && !selectedChannelId) {
-    onChannelSelect(channels[0]._id);
-  }
+  useEffect(() => {
+    // Auto-select first channel if none selected
+    if (channels && channels.length > 0 && !selectedChannelId) {
+      const firstValidChannel = channels.find((ch) => ch?._id);
+      if (firstValidChannel) {
+        onChannelSelect(firstValidChannel._id);
+      }
+    }
+  }, [channels, selectedChannelId, onChannelSelect]);
 
   return (
     <>
@@ -74,11 +84,13 @@ export function Sidebar({
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="start" className="w-64">
-              {workspaces?.map((ws) => 
-                ws && ws._id ? (
+              {workspaces?.map((ws) => {
+                if (!ws || !ws._id) return null;
+                const workspaceId = ws._id;
+                return (
                   <DropdownMenuItem
                     key={ws._id}
-                    onClick={() => onWorkspaceSelect(ws._id)}
+                    onClick={() => onWorkspaceSelect(workspaceId)}
                     className="cursor-pointer"
                   >
                     <div>
@@ -86,8 +98,8 @@ export function Sidebar({
                       <div className="text-sm text-muted-foreground">{ws.description}</div>
                     </div>
                   </DropdownMenuItem>
-                ) : null
-              )}
+                );
+              })}
               <DropdownMenuItem onClick={() => setShowCreateWorkspace(true)} className="cursor-pointer">
                 <Plus className="h-4 w-4 mr-2" />
                 Create Workspace
@@ -135,8 +147,9 @@ export function Sidebar({
                   exit={{ opacity: 0, height: 0 }}
                   className="space-y-1 mt-2"
                 >
-                  {channels?.map((channel) => 
-                    channel ? (
+                  {channels?.map((channel) => {
+                    if (!channel?._id) return null;
+                    return (
                       <motion.div
                         key={channel._id}
                         whileHover={{ x: 4 }}
@@ -151,8 +164,8 @@ export function Sidebar({
                           {channel.name}
                         </Button>
                       </motion.div>
-                    ) : null
-                  )}
+                    );
+                  })}
                 </motion.div>
               )}
             </div>
